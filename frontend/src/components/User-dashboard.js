@@ -193,6 +193,33 @@ const closeModal = () => {
       console.error('Quantity change error:', error);
     }
   };
+
+  const handleQuantityChanges = async (productId, newQuantity) => {
+    try {
+      const product = products.find(p => p.product_id === productId);
+      const response = await fetch('http://localhost:5000/api/products/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          customerId: user?.customerId,  // CHANGED from customerName
+          productName: product.product_name,
+          quantity: newQuantity,
+          action: 'decrease'
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        fetchCartItems();
+      }
+    } catch (error) {
+      console.error('Quantity change error:', error);
+    }
+  };
+
   const removeItem = async (productId, quantity = 1) => {
     try {
       const product = products.find(p => p.product_id === productId);
@@ -434,7 +461,7 @@ const closeModal = () => {
                     <p>Price: ${item.price?.toFixed(2) || '0.00'}</p>
                     <div className="quantity-controls">
                       <button 
-                        onClick={() => handleQuantityChange(item.product_id, item.quantity - 1)}
+                        onClick={() => handleQuantityChanges(item.product_id, item.quantity - 1)}
                         aria-label="Decrease quantity"
                       >
                         -

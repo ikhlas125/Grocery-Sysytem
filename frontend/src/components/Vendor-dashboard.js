@@ -403,6 +403,7 @@ function VendorDashboard() {
           <img src={product.image_url} alt={product.product_name} />
           <h3>{product.product_name}</h3>
           <p className="price">${product.price?.toFixed(2)}</p>
+          <p className="price">Quantity: {product.quantity}</p>
           <button 
             className="remove-item"
             onClick={() => handleRemoveProduct(product.product_id)} // Add this line
