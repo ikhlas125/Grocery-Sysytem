@@ -173,6 +173,17 @@ const Products = {
       console.error('Database error:', error);
       throw new Error('Failed to fecth orders');
     }
+  },
+
+  async addCategories(category_name){
+    try{
+      const pool = await poolPromise;
+      const result = await pool.request().input('category_name',sql.VarChar(50),category_name).execute('addCategory');
+      return result.recordset[0];
+    }catch(error){
+      console.error('Database error:', error);
+      throw new Error('Failed to add category');
+    }
   }
 };
 

@@ -326,6 +326,31 @@ const productsController = {
         data: []
       });
     }
+  },
+
+  addCategories: async (req, res) => {
+    try{
+      const {category_name} = req.body;
+
+      const result = await ProductModel.addCategories(category_name); 
+
+      res.status(201).json({
+        success: true,
+        message: result.message,
+        data: {
+          category_id:result.category_id,
+          category_name
+        }
+      });
+    }catch(error){
+      console.error('[ProductController] Error:', error);
+      const statusCode = error.message.includes('validation') ? 400 : 500;
+      res.status(statusCode).json({
+        success: false,
+        message: error.message || 'Category Addition failed',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
   }
 };
 

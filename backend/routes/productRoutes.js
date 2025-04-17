@@ -12,5 +12,6 @@ router.get('/categories', productsController.getCategories);
 router.post('/vendorProducts',productsController.getVendorProducts);
 router.post('/removeProducts',productsController.removeProducts);
 router.post('/vendorOrders',productsController.getVendorOrders);
+router.post('/addCategories',productsController.addCategories);
 
 module.exports = router;
