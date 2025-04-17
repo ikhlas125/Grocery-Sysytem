@@ -170,6 +170,32 @@ function VendorDashboard() {
       alert(`Error: ${error.message}`);
     }
   };
+
+  const handleAddCategory = async (categoryName) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/products/addCategories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ category_name: categoryName })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to add category');
+      }
+  
+      // Refresh categories list
+      await fetchCategories();
+      return data;
+    } catch (error) {
+      console.error('Error adding category:', error);
+      throw error;
+    }
+  };
   
   const renderAddProduct = () => (
     <div className="profile-settings">
@@ -279,6 +305,42 @@ function VendorDashboard() {
           disabled={isLoading}
         >
           {isLoading ? 'Adding Product...' : 'Add Product'}
+        </button>
+      </form>
+    </div>
+  );
+
+  const renderAddCategory = () => (
+    <div className="profile-settings">
+      <h2>Add New Category</h2>
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        try {
+          const categoryName = e.target.category_name.value;
+          const result = await handleAddCategory(categoryName);
+          e.target.reset();
+          alert(result.message);  // Changed to use database message
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+        }
+      }}>
+        <label>
+          Category Name:
+          <input
+            name="category_name"
+            required
+            minLength="3"
+            maxLength="50"
+            placeholder="Enter category name"
+          />
+        </label>
+  
+        <button 
+          type="submit" 
+          className="submit-btn"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Adding Category...' : 'Add Category'}
         </button>
       </form>
     </div>
@@ -426,8 +488,9 @@ function VendorDashboard() {
             className={activeTab === 'remove' ? 'active' : ''}
             onClick={() => setActiveTab('remove')}
           >
-            🗑️ Add Category
+            📂 Add Category
           </button>
+
           <button 
             className={activeTab === 'ordered' ? 'active' : ''}
             onClick={() => setActiveTab('ordered')}
@@ -457,7 +520,7 @@ function VendorDashboard() {
           </div>
         )}
         {activeTab === 'add' && renderAddProduct()}
-        {activeTab === 'remove'}
+        {activeTab === 'remove' && renderAddCategory()}
         {activeTab === 'ordered' && renderOrders()}
       </div>
     </div>
