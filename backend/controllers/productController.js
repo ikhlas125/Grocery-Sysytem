@@ -278,7 +278,7 @@ const productsController = {
       console.error('Server error:', error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching products',
+        message: 'Error fetching productss',
         error: process.env.NODE_ENV === 'development' ? error.message : undefined,
         data: []
       });

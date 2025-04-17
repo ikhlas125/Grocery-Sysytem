@@ -201,7 +201,7 @@ const Products = {
 
     } catch (error) {
         console.error('Database error:', error);
-        throw new Error('Failed to get product quantity');
+        throw new Error('Failed to get product quantitys');
     }
   },
   
