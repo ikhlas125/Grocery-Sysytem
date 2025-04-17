@@ -24,7 +24,7 @@ const Products = {
         request.input('p_product_name', sql.VarChar(255), productName);
       }
 
-      if (['add', 'update','remove'].includes(action.toLowerCase())) {
+      if (['add', 'update','remove', 'decrease'].includes(action.toLowerCase())) {
         request.input('p_quantity', sql.Int, quantity);
       }
 
@@ -184,7 +184,27 @@ const Products = {
       console.error('Database error:', error);
       throw new Error('Failed to add category');
     }
-  }
+  },
+
+  async getQuantity(productName) {  // Changed parameter name
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('product_name', sql.VarChar(50), productName)
+            .query('SELECT quantity FROM products WHERE product_name = @product_name');
+
+        if (result.recordset.length === 0) {
+            throw new Error(`Product '${productName}' not found`);  // Updated error message
+        }
+
+        return result.recordset[0].quantity;
+
+    } catch (error) {
+        console.error('Database error:', error);
+        throw new Error('Failed to get product quantity');
+    }
+  },
+  
 };
 
 module.exports = Products;

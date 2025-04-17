@@ -23,7 +23,7 @@ const productsController = {
   handleCartOperation: async (req, res) => {
     try {
       const { customerId, productName, quantity, action } = req.body;
-      const validActions = ['add', 'remove', 'update', 'get'];
+      const validActions = ['add', 'remove', 'update', 'get', 'decrease'];
 
       // Validation
       if (!customerId || !validActions.includes(action?.toLowerCase())) {
@@ -48,6 +48,19 @@ const productsController = {
           message: 'Missing product name or quantity'
         });
       }
+
+      const availableQuantity = await ProductModel.getQuantity(productName);
+
+      if(action === 'update'){
+      // Check if product is out of stock
+        if (availableQuantity === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'This product is currently out of stock'
+            });
+        }
+    }
+
 
       const result = await ProductModel.addToCart(
         customerId,  // CHANGED from customerName
