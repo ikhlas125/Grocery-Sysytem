@@ -110,7 +110,7 @@ const Products = {
     }
   },
 
-  addProducts: async (vendor_id,product_id ,product_name, cat_name, price, description, url) => {
+  addProducts: async (vendor_id,product_id ,product_name, cat_name, price, description, url, quantity) => {
     try {
       const pool = await poolPromise;
       const result = await pool.request()
@@ -121,6 +121,7 @@ const Products = {
         .input('price', sql.Decimal(10,2), price)
         .input('description', sql.VarChar(500), description)
         .input('url', sql.VarChar(100), url)
+        .input('quantity',sql.Int,quantity)
         .execute('addProduct');
 
       return result.recordset[0];

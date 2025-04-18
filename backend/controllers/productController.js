@@ -186,7 +186,8 @@ const productsController = {
         cat_name, 
         price, 
         description, 
-        url 
+        url,
+        quantity
       } = req.body;
 
       // Validation
@@ -212,7 +213,8 @@ const productsController = {
         cat_name,
         price,
         description,
-        url 
+        url,
+        quantity,
       );
 
       res.status(201).json({
