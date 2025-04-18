@@ -359,6 +359,37 @@ const closeModal = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId) => {
+    try {
+      const confirmCancel = window.confirm('Are you sure you want to cancel this order?');
+      if (!confirmCancel) return;
+  
+      const response = await fetch('http://localhost:5000/api/products/cancel-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          customerId: user.customerId
+        })
+      });
+  
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to cancel order');
+  
+      if (data.success) {
+        // Refresh orders list
+        loadOrders();
+      }
+    } catch (error) {
+      console.error('Cancel order error:', error);
+      setErrorDetails(error.message);
+    }
+  };
+
+
   const renderOrderDetails = () => {
     if (isLoadingDetails) {
       return (
@@ -760,24 +791,40 @@ const closeModal = () => {
     ) : (
       <div className="orders-list">
         {orders.map(order => (
-          <div 
-            key={order.order_id} 
-            className="order-card"
-            onClick={() => handleOrderClick(order.order_id)}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="order-header">
-              <h3>Order #: {order.order_id}</h3>
-              <span className={`status-badge ${order.order_status.toLowerCase()}`}>
-                {order.order_status}
-              </span>
-            </div>
-            <div className="order-meta">
-              <p>Date: {new Date(order.order_date).toLocaleDateString()}</p>
-              <p>Total: ${order.total_amount?.toFixed(2)}</p>
-            </div>
-          </div>
-        ))}
+  <div 
+    key={order.order_id} 
+    className="order-card"
+    onClick={() => handleOrderClick(order.order_id)}
+    style={{ cursor: 'pointer' }}
+  >
+    <div className="order-header">
+      <h3>Order #: {order.order_id}</h3>
+      <span className={`status-badge ${order.order_status.toLowerCase()}`}>
+        {order.order_status}
+      </span>
+    </div>
+    <div className="order-meta">
+      <p>Date: {new Date(order.order_date).toLocaleDateString()}</p>
+      <p>Total: ${order.total_amount?.toFixed(2)}</p>
+    </div>
+      {order.order_status.toLowerCase() === 'pending' && (
+        <button
+          className="remove-item"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCancelOrder(order.order_id);
+          }}
+          style={{
+            marginTop: '1rem',
+            padding: '0.5rem 1.5rem',
+            alignSelf: 'flex-start'
+          }}
+        >
+          Cancel Order
+        </button>
+      )}
+  </div>
+))}
       </div>
     )}
   </div>

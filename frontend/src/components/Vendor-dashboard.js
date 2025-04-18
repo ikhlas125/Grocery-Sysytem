@@ -210,7 +210,8 @@ function VendorDashboard() {
           description: e.target.description.value,
           cat_name: e.target.cat_name.value,
           price: parseFloat(e.target.price.value),
-          url: e.target.image_url.value
+          url: e.target.image_url.value,
+          quantity: e.target.quantity.value
         };
 
         await handleAddProduct(formData);
@@ -288,6 +289,16 @@ function VendorDashboard() {
             required
             placeholder="0.00"
             inputMode="decimal"
+          />
+        </label>
+
+        <label>
+          Quantity:
+          <input
+            type="number"
+            name="quantity"
+            min = "1"
+            placeholder='Enter Quantity'
           />
         </label>
   
