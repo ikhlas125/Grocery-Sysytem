@@ -380,10 +380,12 @@ const closeModal = () => {
   
       if (data.success) {
         // Refresh orders list
+        alert(data.message || 'Order cancelled successfully');
         loadOrders();
       }
     } catch (error) {
       console.error('Cancel order error:', error);
+      alert(error.message || 'Failed to cancel order');
       setErrorDetails(error.message);
     }
   };
@@ -410,12 +412,14 @@ const closeModal = () => {
       
       if (data.success) {
         // Refresh order details and orders list
+        alert(data.message);
         const updatedDetails = await fetchOrderDetails(selectedOrder);
         setOrderDetails(updatedDetails);
         loadOrders();
       }
     } catch (error) {
       console.error('Remove item error:', error);
+      alert(error.message || 'Failed to remove item');
       setErrorDetails(error.message);
     }
   };
