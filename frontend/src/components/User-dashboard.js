@@ -389,58 +389,36 @@ const closeModal = () => {
     }
   };
 
-
-  const renderOrderDetails = () => {
-    if (isLoadingDetails) {
-      return (
-        <div className="loading-indicator">
-          <div className="spinner"></div>
-          <p>Loading order details...</p>
-        </div>
-      );
-    }
+  const handleRemoveProductFromOrder = async (orderDetailId, productId) => {
+    try {
+      const confirmRemove = window.confirm('Are you sure you want to remove this item from your order?');
+      if (!confirmRemove) return;
   
-    if (errorDetails) {
-      return (
-        <div className="error-message">
-          ⚠️ Error loading details: {errorDetails}
-        </div>
-      );
-    }
+      const response = await fetch('http://localhost:5000/api/products/cancel-Item', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          order_detail_id: orderDetailId,
+          product_id: productId
+        })
+      });
   
-    return (
-      <div className="order-details-modal">
-        <button 
-          className="close-button"
-          onClick={() => {
-            setSelectedOrder(null);
-            setOrderDetails([]);
-          }}
-        >
-          &times;
-        </button>
-        <h3>Order #{selectedOrder} Details</h3>
-        <div className="order-products">
-          {orderDetails.map((item, index) => (
-            <div key={index} className="order-product-item">
-              <img 
-                src={item.image_url || '/placeholder-product.jpg'} 
-                alt={item.product_name}
-                onError={(e) => {
-                  e.target.src = '/placeholder-product.jpg';
-                }}
-              />
-              <div className="product-info">
-                <h4>{item.product_name}</h4>
-                <p>Quantity: {item.quantity}</p>
-                <p>Price: ${item.unit_price?.toFixed(2)} each</p>
-                <p>Total: ${(item.unit_price * item.quantity).toFixed(2)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to remove item');
+      
+      if (data.success) {
+        // Refresh order details and orders list
+        const updatedDetails = await fetchOrderDetails(selectedOrder);
+        setOrderDetails(updatedDetails);
+        loadOrders();
+      }
+    } catch (error) {
+      console.error('Remove item error:', error);
+      setErrorDetails(error.message);
+    }
   };
 
   const renderCashConfirmation = () => (
@@ -561,32 +539,7 @@ const closeModal = () => {
       </div>
     );
   };
-
-  const renderOrders = () => {
-    if (!orders.length) {
-      return <p className="no-orders">No orders found</p>;
-    }
   
-    return (
-      <div className="orders-list">
-        {orders.map(order => (
-          <div key={order.order_id} className="order-card">
-            <div className="order-header">
-              <h3>Order #: {order.order_id}</h3>
-              <span className={`status-badge ${order.order_status.toLowerCase()}`}>
-                {order.order_status}
-              </span>
-            </div>
-            <div className="order-details">
-              <p>Date: {new Date(order.order_date).toLocaleDateString()}</p>
-              <p>Total: ${order.total_amount?.toFixed(2)}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   const renderProducts = () => {
     if (isLoading) {
       return (
@@ -757,20 +710,25 @@ const closeModal = () => {
                   />
                   <div className="product-info">
                     <h4>{item.product_name}</h4>
-                    <div className="product-meta">
-                      <p>Quantity: {item.quantity}</p>
-                      <p>Price: ${item.unit_price?.toFixed(2)}</p>
-                      <p>Total: ${(item.unit_price * item.quantity).toFixed(2)}</p>
-                    </div>
+                    <p>Quantity: {item.quantity}</p>
+                    <p>Price: ${item.unit_price?.toFixed(2)} each</p>
+                    <p>Total: ${(item.unit_price * item.quantity).toFixed(2)}</p>
                   </div>
-                </div>
-              ))}
-              <div className="order-total">
-                <h4>Order Total: ${orderDetails.reduce(
-                  (sum, item) => sum + (item.unit_price * item.quantity), 0
-                ).toFixed(2)}</h4>
-              </div>
-            </div>
+                  {/* Add cancel button here */}
+                  {orders.find(o => o.order_id === selectedOrder)?.order_status?.toLowerCase() === 'pending' && (
+                    <button
+                    className="remove-item"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveProductFromOrder(item.order_detail_id, item.product_id);
+                    }}
+                  >
+                    Remove
+                  </button>
+                  )}
+    </div>
+  ))}
+</div>
           )}
         </div>
       </div>
