@@ -236,6 +236,18 @@ const Products = {
       console.error('Database error:', error);
       throw new Error('Failed to remove product');
     }
+  },
+
+  async getProductsbyCat(category_name){
+    try{
+      const pool = await poolPromise;
+      const result = await pool.request().input('category_name',sql.VarChar(50),category_name).execute('getProductsbyCat');
+       
+      return result.recordset || [];
+    }catch(error){
+      console.error('Database error:', error);
+      throw new Error('Failed to get products');
+    }
   }
 
 };

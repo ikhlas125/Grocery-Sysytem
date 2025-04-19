@@ -427,6 +427,27 @@ const productsController = {
         message: error.message || 'Internal server error'
       });
     }
+  },
+
+  getProductsbyCat: async (req, res) => {
+    try{
+      const { category_name } = req.body;
+
+      const products = await ProductModel.getProductsbyCat(category_name);
+
+      res.status(200).json({
+        success: true,
+        count: products.length,
+        data: products
+      });
+
+    }catch(error){
+      console.error('Controller error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
   }
 
 };
