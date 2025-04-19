@@ -20,6 +20,7 @@ const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 const [errorDetails, setErrorDetails] = useState(null);
 const [isClosing, setIsClosing] = useState(false);
 const [showCashConfirmation, setShowCashConfirmation] = useState(false);
+const [searchQuery, setSearchQuery] = useState('');
 
 
 const closeModal = () => {
@@ -52,6 +53,10 @@ const closeModal = () => {
       loadOrders();
     }
   }, [user, activeTab]);
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value.toLowerCase());
+  };
 
   const fetchProducts = async () => {
     try {
@@ -543,7 +548,13 @@ const closeModal = () => {
     );
   };
   
-  const renderProducts = () => {
+  const renderProducts = (query = '') => {
+    // Filter products based on search query
+    const filteredProducts = products.filter(product => 
+      product.product_name.toLowerCase().includes(query) ||
+      product.description?.toLowerCase().includes(query)
+    );
+  
     if (isLoading) {
       return (
         <div className="loading-indicator">
@@ -552,7 +563,7 @@ const closeModal = () => {
         </div>
       );
     }
-
+  
     if (error) {
       return (
         <div className="error-message">
@@ -560,14 +571,16 @@ const closeModal = () => {
         </div>
       );
     }
-
-    if (products.length === 0) {
-      return <p className="no-products">No products available at the moment</p>;
+  
+    if (filteredProducts.length === 0) {
+      return query ? 
+        <p className="no-products">No products match your search</p> :
+        <p className="no-products">No products available at the moment</p>;
     }
-
+  
     return (
       <div className="products-list">
-        {products.map(product => (
+        {filteredProducts.map(product => (
           <div key={product.product_id} className="product-card">
             <img 
               src={product.image_url || '/placeholder-product.jpg'} 
@@ -577,7 +590,7 @@ const closeModal = () => {
               }}
             />
             <h3>{product.product_name}</h3>
-            <br></br>
+            <br />
             <p className="product-description">
                 {product.description || 'No description available'}
             </p>
@@ -647,11 +660,22 @@ const closeModal = () => {
         </button>
         
         {activeTab === 'home' && (
-          <div className="products-grid">
-            <h2>Available Products ({products.length})</h2>
-            {renderProducts()}
-          </div>
-        )}
+  <div className="products-grid">
+    <div className="products-header">
+      <h2>Available Products ({products.length})</h2>
+      <div className="search-container">
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="search-input"
+        />
+      </div>
+    </div>
+    {renderProducts(searchQuery)}
+  </div>
+)}
 
         {activeTab === 'profile' && (
           <div className="profile-settings">
