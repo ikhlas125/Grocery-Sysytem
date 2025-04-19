@@ -371,8 +371,7 @@ const closeModal = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          orderId: orderId,
-          customerId: user.customerId
+          order_id: orderId,
         })
       });
   
