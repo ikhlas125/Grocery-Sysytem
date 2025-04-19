@@ -21,7 +21,8 @@ const [errorDetails, setErrorDetails] = useState(null);
 const [isClosing, setIsClosing] = useState(false);
 const [showCashConfirmation, setShowCashConfirmation] = useState(false);
 const [searchQuery, setSearchQuery] = useState('');
-
+const [categories, setCategories] = useState([]);
+const [selectedCategory, setSelectedCategory] = useState('');
 
 const closeModal = () => {
   setIsClosing(true);
@@ -54,26 +55,55 @@ const closeModal = () => {
     }
   }, [user, activeTab]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/products/categories');
+        const data = await response.json();
+        if (data.success) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    
+    if (activeTab === 'home') {
+      fetchCategories();
+    }
+  }, [activeTab]);
+
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value.toLowerCase());
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (category = null) => {
     try {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:5000/api/products');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let url = 'http://localhost:5000/api/products';
+      let options = { method: 'GET' };
+  
+      if (category) {
+        url = 'http://localhost:5000/api/products/filter-category';
+        options = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category_name: category })
+        };
       }
+  
+      const response = await fetch(url, options);
+      
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const result = await response.json();
       
       if (!result.success || !Array.isArray(result.data)) {
         throw new Error('Invalid data format from server');
       }
+      
       setProducts(result.data);
       
     } catch (error) {
@@ -663,14 +693,35 @@ const closeModal = () => {
   <div className="products-grid">
     <div className="products-header">
       <h2>Available Products ({products.length})</h2>
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="search-input"
-        />
+      <div className="filters-container">
+        <div className="category-filter">
+          <select
+            value={selectedCategory}
+            onChange={async (e) => {
+              const category = e.target.value;
+              setSelectedCategory(category);
+              await fetchProducts(category);
+            }}
+            className="category-select"
+          >
+            <option value="">All Categories</option>
+            {categories.map(category => (
+              <option key={category.category_id} value={category.category_name}>
+                {category.category_name}
+              </option>
+            ))}
+          </select>
+          <div className="select-arrow"></div>
+        </div>
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="search-input"
+          />
+        </div>
       </div>
     </div>
     {renderProducts(searchQuery)}
