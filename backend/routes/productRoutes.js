@@ -14,5 +14,6 @@ router.post('/removeProducts',productsController.removeProducts);
 router.post('/vendorOrders',productsController.getVendorOrders);
 router.post('/addCategories',productsController.addCategories);
 router.post('/cancel-Item',productsController.CancelProduct);
+router.post('/cancel-order',productsController.CancelOrder);
 
 module.exports = router;

@@ -400,7 +400,35 @@ const productsController = {
         message: error.message || 'Internal server error'
       });
     }
+  },
+
+  CancelOrder: async (req, res) => {
+    try{
+      const {order_id} = req.body;
+
+      if (!order_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Order ID is required'
+        });
+      }
+
+      const result = await ProductModel.CancelOrder(order_id);
+
+      return res.status(200).json({
+        success: true,
+        message: result.message
+      });
+
+    }catch(error){
+      console.error('Controller error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
   }
+
 };
 
 module.exports = productsController;

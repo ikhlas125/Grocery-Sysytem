@@ -221,6 +221,21 @@ const Products = {
       console.error('Database error:', error);
       throw new Error('Failed to remove product');
     }
+  },
+
+  async CancelOrder(order_id){
+    try{
+      const pool = await poolPromise;
+      const result =  await pool.request()
+      .input('order_id',sql.VarChar(6),order_id)
+      .execute('CancelOrder');
+
+      return result.recordset[0];
+
+    }catch(error){
+      console.error('Database error:', error);
+      throw new Error('Failed to remove product');
+    }
   }
 
 };
