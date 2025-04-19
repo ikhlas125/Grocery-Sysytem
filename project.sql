@@ -43,6 +43,7 @@ create table products (
     foreign key (category_id) references categories(category_id)
 );
 alter table products add image_url varchar(100)
+alter table products add quantity int
 
 create table shopping_carts (
     cart_id varchar(6) ,
@@ -227,6 +228,7 @@ begin
 	on P.vendor_id = V.vendor_id
 	join categories C 
 	on P.category_id = C.category_id
+	where P.quantity > 0
     order by C.category_name, P.product_name;
 end;
 
@@ -247,97 +249,151 @@ begin
 end;
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-alter procedure add_to_cart
-    @p_customer_name varchar(100),
+ALTER PROCEDURE add_to_cart
+    @p_customer_id varchar(6),
     @p_product_name varchar(255),
     @p_quantity int,
-    @p_action varchar(10) = 'add'  -- 'add' or 'remove'
-as
-begin
-    declare @customer_id varchar(6), @product_id varchar(6);
-
-    -- get customer id from name
-    select @customer_id = c.customer_id
-    from customers c
-    where lower(c.full_name) = lower(@p_customer_name);
+    @p_action varchar(10) = 'add'  -- 'add', 'remove', or 'update'
+AS
+BEGIN
+    DECLARE @product_id varchar(6);
 
     -- get product id from name
-    select @product_id = p.product_id
-    from products p
-    where lower(p.product_name) = lower(@p_product_name);
+    SELECT @product_id = p.product_id
+    FROM products p
+    WHERE LOWER(p.product_name) = LOWER(@p_product_name);
 
     -- validate inputs
-    if @customer_id is null
-    begin
-        raiserror('customer not found', 16, 1);
-        return;
-    end;
+    IF NOT EXISTS (SELECT 1 FROM customers WHERE customer_id = @p_customer_id)
+    BEGIN
+        RAISERROR('customer not found', 16, 1);
+        RETURN;
+    END;
 
-    if @product_id is null
-    begin
-        raiserror('product not found', 16, 1);
-        return;
-    end;
+    IF @product_id IS NULL
+    BEGIN
+        RAISERROR('product not found', 16, 1);
+        RETURN;
+    END;
 
-    if @p_quantity <= 0
-    begin
-        raiserror('quantity must be positive', 16, 1);
-        return;
-    end;
+    IF @p_quantity <= 0
+    BEGIN
+        RAISERROR('quantity must be positive', 16, 1);
+        RETURN;
+    END;
 
     -- handle cart action
-    if @p_action = 'add'
-    begin
-        if exists (select 1 from shopping_carts where customer_id = @customer_id and product_id = @product_id)
-        begin
-            update shopping_carts
-            set quantity = quantity + @p_quantity
-            where customer_id = @customer_id
-            and product_id = @product_id;
-        end
-        else if exists (select 1 from shopping_carts where customer_id = @customer_id)
-        begin
-           declare @cart_idd varchar(6)
-		   select @cart_idd=shopping_carts.cart_id from shopping_carts
-		   where shopping_carts.customer_id=@customer_id
+    IF @p_action = 'add'
+    BEGIN
+        IF EXISTS (SELECT 1 FROM shopping_carts WHERE customer_id = @p_customer_id AND product_id = @product_id)
+        BEGIN
+            UPDATE shopping_carts
+            SET quantity = quantity + @p_quantity
+            WHERE customer_id = @p_customer_id
+            AND product_id = @product_id;
 
-		   if exists(select 1 from shopping_carts where customer_id = @customer_id and product_id = @product_id)
-		   begin
-				update shopping_carts
-				set quantity =quantity+ @p_quantity
-				where customer_id = @customer_id
-				and @cart_idd=cart_id
-			end;
-			else if not exists(select 1 from shopping_carts where customer_id = @customer_id and product_id =@product_id )
-			begin
-				declare @cart varchar(6)
-				select @cart=cart_id from shopping_carts where customer_id = @customer_id
-				insert into shopping_carts values(@cart,@customer_id,@product_id,@p_quantity)
-			end;
-        end;
-		else
-		begin
-			insert into shopping_carts (cart_id, customer_id, product_id, quantity)
-            values (concat('SC', format((select count(*) from shopping_carts) + 1, '000')),@customer_id,@product_id,@p_quantity);
-		end;
-        print 'item added to cart';
-    end
-    else if @p_action = 'remove'
-    begin
-        delete from shopping_carts
-        where customer_id = @customer_id
-        and product_id = @product_id;
+            UPDATE products
+            SET quantity = quantity - @p_quantity
+            WHERE product_id = @product_id;
+        END
+        ELSE IF EXISTS (SELECT 1 FROM shopping_carts WHERE customer_id = @p_customer_id)
+        BEGIN
+            DECLARE @cart_idd varchar(6);
+            SELECT @cart_idd = cart_id FROM shopping_carts WHERE customer_id = @p_customer_id;
+            
+            IF EXISTS(SELECT 1 FROM shopping_carts WHERE customer_id = @p_customer_id AND product_id = @product_id)
+            BEGIN
+                UPDATE shopping_carts
+                SET quantity = quantity + @p_quantity
+                WHERE customer_id = @p_customer_id
+                AND cart_id = @cart_idd;
+
+                UPDATE products
+                SET quantity = quantity - @p_quantity
+                WHERE product_id = @product_id;
+            END;
+            ELSE IF NOT EXISTS(SELECT 1 FROM shopping_carts WHERE customer_id = @p_customer_id AND product_id = @product_id)
+            BEGIN
+                DECLARE @cart varchar(6);
+                SELECT @cart = cart_id FROM shopping_carts WHERE customer_id = @p_customer_id;
+                
+                INSERT INTO shopping_carts 
+                VALUES(@cart, @p_customer_id, @product_id, @p_quantity);
+
+                UPDATE products
+                SET quantity = quantity - @p_quantity
+                WHERE product_id = @product_id;
+            END;
+        END;
+        ELSE
+        BEGIN
+            INSERT INTO shopping_carts (cart_id, customer_id, product_id, quantity)
+            VALUES (CONCAT('SC', FORMAT((SELECT COUNT(*) FROM shopping_carts) + 1, '000')), 
+                   @p_customer_id, @product_id, @p_quantity);
+
+            UPDATE products
+            SET quantity = quantity - @p_quantity
+            WHERE product_id = @product_id;
+        END;
+        PRINT 'item added to cart';
+    END
+    ELSE IF @p_action = 'remove'
+    BEGIN
+        DECLARE @removed_quantity int;
         
-        print 'item removed from cart';
-    end;
-	else if @p_action='update'
-	begin
-		update shopping_carts
-		set quantity =@p_quantity
-		where customer_id = @customer_id
-		and product_id = @product_id;
-	end;
-end;
+        SELECT @removed_quantity = quantity 
+        FROM shopping_carts 
+        WHERE customer_id = @p_customer_id AND product_id = @product_id;
+        
+        DELETE FROM shopping_carts
+        WHERE customer_id = @p_customer_id
+        AND product_id = @product_id;
+
+        UPDATE products
+        SET quantity = quantity + @removed_quantity
+        WHERE product_id = @product_id;
+        
+        PRINT 'item removed from cart';
+    END;
+    ELSE IF @p_action = 'update'
+    BEGIN
+        DECLARE @old_quantity int;
+        
+        SELECT @old_quantity = quantity 
+        FROM shopping_carts 
+        WHERE customer_id = @p_customer_id AND product_id = @product_id;
+        
+        UPDATE shopping_carts
+        SET quantity = @p_quantity
+        WHERE customer_id = @p_customer_id
+        AND product_id = @product_id;
+
+        UPDATE products
+        SET quantity = quantity + (@old_quantity - @p_quantity)
+        WHERE product_id = @product_id;
+        
+        PRINT 'cart quantity updated';
+    END;
+	ELSE IF @p_action = 'decrease'
+    BEGIN
+        DECLARE @old_quantitys int;
+        
+        SELECT @old_quantitys = quantity 
+        FROM shopping_carts 
+        WHERE customer_id = @p_customer_id AND product_id = @product_id;
+        
+        UPDATE shopping_carts
+        SET quantity = @p_quantity
+        WHERE customer_id = @p_customer_id
+        AND product_id = @product_id;
+
+        UPDATE products
+        SET quantity = quantity + (@old_quantitys - @p_quantity)
+        WHERE product_id = @product_id;
+        
+        PRINT 'cart quantity updated';
+    END;
+END;
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ALTER PROCEDURE checkout
@@ -362,15 +418,40 @@ BEGIN
 		where S.customer_id=@customerid
 		group by S.customer_id
 
-		insert into orders values(concat('ORD', format((select count(*) from orders) + 1, '000')),@customerid,getdate(),@total,@payment,'pending')
-		declare @orderid VARCHAR(6) = concat('ORD', format((select count(*) from orders)+0, '000'))
-		DECLARE @base_count INT = ISNULL((SELECT COUNT(*) FROM order_details), 0);
-		insert into order_details(order_detail_id, order_id, product_id, quantity, unit_price)
-		select CONCAT('OD', FORMAT(@base_count + ROW_NUMBER() OVER (ORDER BY S.product_id), '000')),@orderid,S.product_id,S.quantity,P.price
-		from shopping_carts S
-		join products P
-		on S.product_id=P.product_id
-		where S.customer_id=@customerid
+		DECLARE @next_order_num INT = COALESCE(
+		(SELECT MAX(CAST(SUBSTRING(order_id, 4, LEN(order_id)) AS INT)) FROM orders), 0) + 1;
+		DECLARE @new_order_id VARCHAR(10) = 'ORD' + RIGHT('000' + CAST(@next_order_num AS VARCHAR), 3);
+		SELECT @new_order_id;
+
+		insert into orders values(@new_order_id,@customerid,getdate(),@total,@payment,'pending')
+
+		--DECLARE @next_orderdetail_num INT = COALESCE(
+		--(SELECT MAX(CAST(SUBSTRING(order_id, 4, LEN(order_id)) AS INT)) FROM orders), 0) + 1;
+		--DECLARE @new_orderdetail_id VARCHAR(10) = 'OD' + RIGHT('000' + CAST(@next_orderdetail_num AS VARCHAR), 3);
+		DECLARE @next_orderdetail_num INT = COALESCE(
+		(SELECT MAX(CAST(SUBSTRING(order_detail_id, 3, LEN(order_detail_id)) AS INT)) 
+		 FROM order_details 
+		 WHERE order_detail_id LIKE 'OD%'), 0);
+		SELECT @next_orderdetail_num;
+
+		WITH CartWithRowNumbers AS (
+		SELECT 
+			S.product_id,
+			S.quantity,
+			P.price AS unit_price,
+			ROW_NUMBER() OVER (ORDER BY S.product_id) AS rn
+			FROM shopping_carts S
+			JOIN products P ON S.product_id = P.product_id
+			WHERE S.customer_id = @customerid
+		)
+		INSERT INTO order_details (order_detail_id, order_id, product_id, quantity, unit_price)
+		SELECT 
+			'OD' + RIGHT('000' + CAST(@next_orderdetail_num + rn AS VARCHAR), 3),
+			@new_order_id,
+			product_id,
+			quantity,
+			unit_price
+		FROM CartWithRowNumbers;
 
 		delete from shopping_carts
 		where customer_id=@customerid
@@ -417,7 +498,7 @@ alter  procedure get_orders_details
 @orderid varchar(6)
 as
 begin 
-	select P.image_url,P.product_name,O.quantity,O.unit_price from order_details O
+	select P.product_id,O.order_detail_id, P.image_url,P.product_name,O.quantity,O.unit_price from order_details O
 	join products P
 	on O.product_id = P.product_id
 	where @orderid=O.order_id
@@ -451,7 +532,7 @@ END
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 alter procedure addProduct
-@vendor_id varchar(6),@product_id varchar(6),@product_name varchar(255),@cat_name varchar(50),@price decimal(10,2),@description varchar(500),@url varchar(100)
+@vendor_id varchar(6),@product_id varchar(6),@product_name varchar(255),@cat_name varchar(50),@price decimal(10,2),@description varchar(500),@url varchar(100),@quantity int
 as
 begin
 	declare @catid varchar(6)
@@ -459,7 +540,7 @@ begin
 
 	select @catid=C.category_id from categories C
 	where @cat_name=C.category_name
-	insert into products values(@product_id,@vendor_id,@product_name,@catid,@price,@description,@url)
+	insert into products values(@product_id,@vendor_id,@product_name,@catid,@price,@description,@url,@quantity)
 	 SELECT 
             'Success' AS status,
             'Product added successfully' AS message,
@@ -474,11 +555,11 @@ begin
 end;	
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-create procedure getVendorProducts
+alter procedure getVendorProducts
 @vendor_id varchar(6)
 as
 begin
-	 select P.product_id,P.product_name,V.vendor_name,C.category_name,P.price,P.description,P.image_url from products P
+	 select P.product_id,P.product_name,V.vendor_name,C.category_name,P.price,P.description,P.image_url,P.quantity from products P
     join vendors V 
 	on P.vendor_id = V.vendor_id
 	join categories C 
@@ -543,11 +624,71 @@ begin
 end
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-SELECT * FROM shopping_carts;
-SELECT * FROM orders;
+alter procedure CancelProduct 
+@order_detail_id varchar(6),@product_id varchar(6)
+as
+begin
+	declare @message varchar(50)
+	declare @quantity int
+	declare @unit float
+	select @unit = unit_price from order_details where order_detail_id = @order_detail_id
+	select @quantity = quantity from order_details where order_detail_id = @order_detail_id
+
+	if @quantity is not null
+	begin
+		update products
+		set quantity = quantity + @quantity
+		where product_id = @product_id
+
+		update orders
+		set total_amount = total_amount - @unit
+
+		delete order_details
+		where order_detail_id = @order_detail_id
+
+		set @message = 'Item removed  succesfully'
+	end
+
+	else 
+	begin
+		set @message = 'Order detail not found'
+	end
+
+	select @message as message 
+end;
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+alter table order_details add constraint fk_order foreign key(order_id) references orders(order_id) on delete cascade
+
+alter procedure CancelOrder
+@order_id varchar(6)
+as
+begin
+	declare @message varchar(50)
+	if EXISTS (SELECT 1 FROM orders WHERE order_id = @order_id AND order_status = 'pending')
+	begin
+		delete orders
+		where order_id = @order_id
+		set @message = 'Order deleted succesfully'
+	end
+	else 
+	begin
+		set @message = 'Order has already been processed'
+	end
+
+	select @message as message
+end
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SELECT * FROM shopping_carts; 
+SELECT * FROM orders; 
+SELECT * FROM order_details; 
 SELECT * FROM products;
-SELECT * FROM order_details;
 SELECT * FROM vendors;
 SELECT * FROM users;
 SELECT * FROM customers;
-SELECT * FROM categories; delete categories where category_id='CAT006'
+SELECT * FROM categories; 
+delete categories where category_id='CAT006' update products set quantity=10 
+delete from orders delete from order_details
+delete from shopping_carts SELECT quantity FROM products WHERE product_name = 'Smart Watch'
+update orders set order_status='pending' where order_id = 'ORD002'
