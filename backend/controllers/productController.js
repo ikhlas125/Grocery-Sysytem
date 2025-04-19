@@ -366,6 +366,40 @@ const productsController = {
         error: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
+  },
+
+  CancelProduct: async (req, res) => {
+    try{
+      const {order_detail_id,product_id} = req.body;
+
+      if (!product_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Product ID is required'
+        });
+      }
+
+      if (!order_detail_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Order Detail ID is required'
+        });
+      }
+
+      const result = await ProductModel.CancelProduct(order_detail_id,product_id);
+
+      return res.status(200).json({
+        success: true,
+        message: result.message
+      });
+
+    }catch(error){
+      console.error('Controller error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
   }
 };
 

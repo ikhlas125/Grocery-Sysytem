@@ -99,6 +99,8 @@ const Products = {
       const pool = await poolPromise;
       const result = await pool.request().input('orderid',sql.VarChar(6),orderid).execute('get_orders_details');
       return result.recordset.map(details => ({
+        product_id:details.product_id,
+        order_detail_id: details.order_detail_id,
         image_url: details.image_url,
         product_name: details.product_name,
         quantity: details.quantity,
@@ -206,6 +208,21 @@ const Products = {
     }
   },
   
+  async CancelProduct(order_detail_id,product_id){
+    try{
+      const pool = await poolPromise;
+      const result = await pool.request()
+      .input('order_detail_id',sql.VarChar(6),order_detail_id)
+      .input('product_id',sql.VarChar(6),product_id)
+      .execute('CancelProduct');
+
+      return result.recordset[0];
+    }catch(error){
+      console.error('Database error:', error);
+      throw new Error('Failed to remove product');
+    }
+  }
+
 };
 
 module.exports = Products;
