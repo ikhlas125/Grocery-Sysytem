@@ -13,6 +13,7 @@ function VendorDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]); 
+  const [editingProduct, setEditingProduct] = useState(null);
 
   useEffect(() => {
     fetchCategories();
@@ -321,6 +322,98 @@ function VendorDashboard() {
     </div>
   );
 
+  const renderUpdateForm = () => {
+    if (!editingProduct) return null;
+  
+    return (
+      <div className="profile-settings">
+        <h2>Update Product</h2>
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          try {
+            const formData = {
+              product_name: e.target.product_name.value,
+              price: parseFloat(e.target.price.value),
+              description: e.target.description.value,
+              quantity: parseInt(e.target.quantity.value)
+            };
+  
+            const response = await fetch('http://localhost:5000/api/products/update-product', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              },
+              body: JSON.stringify({
+                product_id: editingProduct.product_id,
+                ...formData
+              })
+            });
+  
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Update failed');
+  
+            await fetchVendorProducts();
+            setEditingProduct(null);
+            alert('Product updated successfully!');
+          } catch (error) {
+            alert(`Error: ${error.message}`);
+          }
+        }}>
+          <label>
+            Product Name:
+            <input 
+              name="product_name" 
+              required
+              defaultValue={editingProduct.product_name}
+            />
+          </label>
+  
+          <label>
+            Price ($):
+            <input
+              type="number"
+              name="price"
+              step="0.01"
+              defaultValue={editingProduct.price}
+              required
+            />
+          </label>
+  
+          <label>
+            Description:
+            <textarea 
+              name="description" 
+              required
+              defaultValue={editingProduct.description}
+            />
+          </label>
+  
+          <label>
+            Quantity:
+            <input
+              type="number"
+              name="quantity"
+              defaultValue={editingProduct.quantity}
+              required
+            />
+          </label>
+  
+          <div className="form-actions">
+            <button type="submit" className="submit-btn">Update Product</button>
+            <button 
+              type="button" 
+              className="cancel-btn"
+              onClick={() => setEditingProduct(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
   const renderAddCategory = () => (
     <div className="profile-settings">
       <h2>Add New Category</h2>
@@ -415,12 +508,20 @@ function VendorDashboard() {
           <h3>{product.product_name}</h3>
           <p className="price">${product.price?.toFixed(2)}</p>
           <p className="price">Quantity: {product.quantity}</p>
-          <button 
-            className="remove-item"
-            onClick={() => handleRemoveProduct(product.product_id)} // Add this line
-          >
-            Remove Product
-          </button>
+          <div className="product-actions">
+            <button 
+              className="edit-btn"
+              onClick={() => setEditingProduct(product)}
+            >
+              Edit
+            </button>
+            <button 
+              className="remove-item"
+              onClick={() => handleRemoveProduct(product.product_id)}
+            >
+              Remove
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -526,11 +627,11 @@ function VendorDashboard() {
         </button>
 
         {activeTab === 'home' && (
-          <div className="products-grid">
-            <h2>Available Products ({products.length})</h2>
-            {renderRemoveProduct()}
-          </div>
-        )}
+  <div className="products-grid">
+    <h2>Available Products ({products.length})</h2>
+    {editingProduct ? renderUpdateForm() : renderRemoveProduct()}
+  </div>
+)}
         {activeTab === 'add' && renderAddProduct()}
         {activeTab === 'remove' && renderAddCategory()}
         {activeTab === 'ordered' && renderOrders()}
