@@ -16,5 +16,6 @@ router.post('/addCategories',productsController.addCategories);
 router.post('/cancel-Item',productsController.CancelProduct);
 router.post('/cancel-order',productsController.CancelOrder);
 router.post('/filter-category',productsController.getProductsbyCat);
+router.post('/update-product',productsController.updateProduct);
 
 module.exports = router;

@@ -248,6 +248,25 @@ const Products = {
       console.error('Database error:', error);
       throw new Error('Failed to get products');
     }
+  },
+
+  async updateProduct(product_id,product_name,price,description,quantity){
+    try{
+      const pool = await poolPromise;
+      const result = await pool.request()
+       .input('product_id',sql.VarChar(6),product_id)
+       .input('product_name',sql.VarChar(50),product_name)
+       .input('price',sql.Float,price)
+       .input('description',sql.VarChar(255),description)
+       .input('quantity',sql.Int,quantity)
+       .execute('updateProduct');
+
+      return result.recordset[0]; 
+
+    }catch(error){
+      console.error('Database error:', error);
+      throw new Error('Failed to update products');
+    }
   }
 
 };

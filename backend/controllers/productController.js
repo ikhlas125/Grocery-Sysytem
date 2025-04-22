@@ -448,6 +448,54 @@ const productsController = {
         message: error.message || 'Internal server error'
       });
     }
+  },
+
+  updateProduct: async (req, res) => {
+    try{
+      const {product_id,product_name,price,description,quantity} = req.body;
+      if (!product_name || !price || !description) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields'
+        });
+      }
+
+      if (isNaN(price) || Number(price) <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Price must be a positive number'
+        });
+      }
+
+      const result = await ProductModel.updateProduct(
+        product_id,
+        product_name,
+        price,
+        description,
+        quantity
+      )
+
+      res.status(201).json({
+        success: true,
+        message: result.message,
+        data: {
+          product_id: result.product_id,
+          product_name,
+          price,
+          description,
+          quantity
+        }
+      });
+
+    }catch(error){
+      console.error('[ProductController] Error:', error);
+      const statusCode = error.message.includes('validation') ? 400 : 500;
+      res.status(statusCode).json({
+        success: false,
+        message: error.message || 'Product updation failed',
+        error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
   }
 
 };
