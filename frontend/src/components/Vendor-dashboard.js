@@ -7,7 +7,7 @@ function VendorDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("add");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -601,7 +601,7 @@ function VendorDashboard() {
 
   return (
     <div className="dashboard-container">
-      <div className={`dashboard-sidebar ${!isSidebarOpen ? "collapsed" : ""}`}>
+      <div className="dashboard-sidebar">
         <div className="user-profile">
           <div className="profile-picture">
             {user?.name?.[0]?.toUpperCase() || "V"}
@@ -639,19 +639,7 @@ function VendorDashboard() {
         </nav>
       </div>
 
-      <div className={`dashboard-main ${!isSidebarOpen ? "collapsed" : ""}`}>
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <div className={`hamburger ${isSidebarOpen ? "open" : ""}`}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </button>
-
+      <div className="dashboard-main ">
         {activeTab === "home" && (
           <div className="products-grid">
             <h2>Available Products ({products.length})</h2>

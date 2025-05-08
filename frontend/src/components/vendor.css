@@ -9,25 +9,21 @@
   background: var(--sidebar-bg);
   color: var(--white);
   box-shadow: var(--shadow);
-  width: 300px; /* Expanded state */
-  padding: 2rem;
+  width: 80px; /* Collapsed by default */
+  padding: 1rem;
   transition: width 0.3s ease, padding 0.3s ease;
   position: fixed;
   top: 0;
   left: 0;
   height: 100%;
   z-index: 1000;
-  overflow: hidden; /* Prevent content overflow */
+  overflow: hidden;
 }
 
-.dashboard-sidebar.collapsed {
-  width: 80px; /* Collapsed state */
-  padding: 1rem;
-}
-
-.dashboard-sidebar.collapsed .user-profile h3,
-.dashboard-sidebar.collapsed .user-profile p {
-  display: none; /* Hide text in collapsed state */
+/* Expanded state on hover */
+.dashboard-sidebar:hover {
+  width: 300px;
+  padding: 2rem;
 }
 
 .user-profile {
@@ -40,7 +36,13 @@
   margin: 1rem 0 0.5rem;
   font-family: "Playfair Display", serif;
   font-size: 1.8rem;
-  white-space: nowrap; /* Prevent text wrapping */
+  white-space: nowrap;
+  display: none; /* Hidden by default */
+}
+
+.dashboard-sidebar:hover .user-profile h3,
+.dashboard-sidebar:hover .user-profile p {
+  display: block; /* Show on hover */
 }
 
 .user-profile p {
@@ -49,13 +51,14 @@
   color: var(--white);
   opacity: 0.8;
   white-space: nowrap;
+  display: none; /* Hidden by default */
 }
 
 .profile-picture {
   background: var(--accent-orange);
-  width: 80px;
-  height: 80px;
-  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
   color: var(--white);
   display: flex;
   align-items: center;
@@ -66,10 +69,10 @@
   transition: width 0.3s ease, height 0.3s ease, font-size 0.3s ease;
 }
 
-.dashboard-sidebar.collapsed .profile-picture {
-  width: 60px; /* Smaller in collapsed state */
-  height: 60px;
-  font-size: 1.5rem;
+.dashboard-sidebar:hover .profile-picture {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
 }
 
 .dashboard-nav {
@@ -90,6 +93,8 @@
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dashboard-nav button:hover {
@@ -105,12 +110,12 @@
 .dashboard-main {
   flex: 1;
   padding: 2rem;
-  margin-left: 300px; /* Match expanded sidebar width */
+  margin-left: 80px; /* Match collapsed sidebar width */
   transition: margin-left 0.3s ease;
 }
 
-.dashboard-main.collapsed {
-  margin-left: 80px; /* Match collapsed sidebar width */
+.dashboard-sidebar:hover + .dashboard-main {
+  margin-left: 300px; /* Match expanded sidebar width */
 }
 
 .products-list {
@@ -135,8 +140,8 @@
 
 .product-actions {
   display: flex;
-  justify-content: center; /* Center buttons horizontally */
-  gap: 1rem; /* Space between buttons */
+  justify-content: center;
+  gap: 1rem;
   margin-top: 1rem;
 }
 
@@ -204,110 +209,6 @@
 .status-badge.pending {
   background: #fff3cd;
   color: #856404;
-}
-
-.sidebar-toggle {
-  background: var(--accent-orange) !important;
-  border: none;
-  padding: 0.8rem;
-  cursor: pointer;
-  position: fixed;
-  top: 1rem;
-  left: 300px; /* Align with expanded sidebar */
-  z-index: 1100;
-  border-radius: 8px;
-  transition: left 0.3s ease;
-}
-
-.dashboard-main.collapsed ~ .sidebar-toggle {
-  left: 80px; /* Align with collapsed sidebar */
-}
-
-.hamburger {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 24px;
-  height: 18px;
-}
-
-.hamburger span {
-  background: var(--white);
-  height: 3px;
-  border-radius: 2px;
-  transition: all 0.3s ease;
-}
-
-.hamburger.open span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
-}
-
-.hamburger.open span:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger.open span:nth-child(3) {
-  transform: rotate(-45deg) translate(7px, -7px);
-}
-
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .dashboard-sidebar {
-    width: 80px; /* Collapsed by default on mobile */
-    padding: 1rem;
-  }
-
-  .dashboard-sidebar:not(.collapsed) {
-    width: 300px; /* Expanded when toggled */
-    padding: 2rem;
-  }
-
-  .dashboard-main {
-    margin-left: 80px; /* Match collapsed sidebar */
-    padding: 1rem;
-  }
-
-  .dashboard-main:not(.collapsed) {
-    margin-left: 300px; /* Match expanded sidebar */
-  }
-
-  .dashboard-sidebar.collapsed .user-profile h3,
-  .dashboard-sidebar.collapsed .user-profile p {
-    display: none;
-  }
-
-  .dashboard-sidebar.collapsed .profile-picture {
-    width: 50px;
-    height: 50px;
-    font-size: 1.2rem;
-  }
-
-  .sidebar-toggle {
-    left: 80px; /* Align with collapsed sidebar */
-  }
-
-  .dashboard-main:not(.collapsed) ~ .sidebar-toggle {
-    left: 300px; /* Align with expanded sidebar */
-  }
-
-  .products-list {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-settings {
-    padding: 1.5rem;
-  }
-
-  .product-actions {
-    flex-direction: column; /* Stack buttons vertically on mobile */
-    align-items: center; /* Center buttons in the column */
-  }
-
-  .edit-btn,
-  .remove-item {
-    width: 100%; /* Full width for consistency on mobile */
-    justify-content: center; /* Center text/icon within buttons */
-  }
 }
 
 /* Loading States */
@@ -393,12 +294,6 @@ select:focus {
   border-radius: 4px;
 }
 
-.status-badge {
-  padding: 5px 10px;
-  border-radius: 15px;
-  font-size: 0.9rem;
-}
-
 .no-orders {
   text-align: center;
   color: #666;
@@ -461,12 +356,12 @@ select:focus {
 .edit-btn {
   background: var(--primary-green);
   color: var(--white) !important;
-  padding: 0.8rem 1.5rem; /* Match remove-item size */
-  border-radius: 6px; /* Match remove-item */
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 0.3rem; /* Reduced gap to minimize width */
+  gap: 0.3rem;
 }
 
 .edit-btn:hover {
@@ -476,7 +371,7 @@ select:focus {
 
 .edit-btn::before {
   content: "✏️";
-  font-size: 0.8rem; /* Smaller icon to fit */
+  font-size: 0.8rem;
 }
 
 .cancel-btn {
@@ -532,6 +427,44 @@ select:focus {
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
+  .dashboard-sidebar {
+    width: 80px !important;
+    padding: 1rem !important;
+  }
+
+  .dashboard-sidebar:hover {
+    width: 300px !important;
+    padding: 2rem !important;
+  }
+
+  .dashboard-main {
+    margin-left: 80px !important;
+    padding: 1rem;
+  }
+
+  .dashboard-sidebar:hover + .dashboard-main {
+    margin-left: 300px !important;
+  }
+
+  .products-list {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-settings {
+    padding: 1.5rem;
+  }
+
+  .product-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .edit-btn,
+  .remove-item {
+    width: 100%;
+    justify-content: center;
+  }
+
   .update-form-container {
     padding: 1.5rem;
     margin: 1rem;
@@ -543,16 +476,6 @@ select:focus {
 
   .update-form-container form > * {
     grid-column: span 1 !important;
-  }
-
-  .product-actions {
-    flex-direction: column;
-  }
-
-  .edit-btn,
-  .remove-item {
-    width: 100%;
-    justify-content: center;
   }
 }
 
@@ -574,4 +497,15 @@ select:focus {
 
 .loading-form {
   animation: pulse 1.5s ease-in-out infinite;
+}
+
+.dashboard-sidebar:not(:hover) .user-profile {
+  margin-bottom: 1rem;
+}
+
+.dashboard-sidebar:not(:hover) .profile-picture {
+  margin: 5.5rem auto 0.5rem;
+  width: 50px;
+  height: 50px;
+  font-size: 1.2rem;
 }
