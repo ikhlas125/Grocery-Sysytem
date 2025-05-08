@@ -7,7 +7,6 @@ function UserDashboard() {
   const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [activeTab, setActiveTab] = useState("home");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cartItems, setCartItems] = useState([]);
@@ -32,6 +31,7 @@ function UserDashboard() {
       setIsClosing(false);
     }, 200);
   };
+
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) {
@@ -126,7 +126,7 @@ function UserDashboard() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          customerId: user?.customerId, // CHANGED from user?.name
+          customerId: user?.customerId,
           action: "get",
         }),
       });
@@ -148,7 +148,7 @@ function UserDashboard() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // Use localStorage directly
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
           body: JSON.stringify({
             customerid: user.customerId,
@@ -166,18 +166,17 @@ function UserDashboard() {
         throw new Error(data.message || "Failed to fetch orders");
       }
 
-      return data.data; // Return the orders array
+      return data.data;
     } catch (error) {
       console.error("Order fetch error:", error);
-      // Consider adding error state handling here
-      throw error; // Re-throw to handle in component
+      throw error;
     }
   };
 
   const loadOrders = async () => {
     try {
       const orders = await fetchOrders();
-      setOrders(orders); // Update state with fetched orders
+      setOrders(orders);
     } catch (error) {
       setError(error.message);
     }
@@ -192,7 +191,7 @@ function UserDashboard() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          customerId: user?.customerId, // CHANGED from customerName
+          customerId: user?.customerId,
           productName: product.product_name,
           quantity: 1,
           action: "add",
@@ -218,7 +217,7 @@ function UserDashboard() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          customerId: user?.customerId, // CHANGED from customerName
+          customerId: user?.customerId,
           productName: product.product_name,
           quantity: newQuantity,
           action: "update",
@@ -244,7 +243,7 @@ function UserDashboard() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          customerId: user?.customerId, // CHANGED from customerName
+          customerId: user?.customerId,
           productName: product.product_name,
           quantity: newQuantity,
           action: "decrease",
@@ -274,7 +273,7 @@ function UserDashboard() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          customerId: user?.customerId, // CHANGED from customerName
+          customerId: user?.customerId,
           productName: product.product_name,
           quantity: quantity,
           action: "remove",
@@ -287,16 +286,14 @@ function UserDashboard() {
 
       const result = await response.json();
       if (result.success) {
-        // Optimistically update UI before fetching
         setCartItems((prevItems) =>
           prevItems.filter((item) => item.product_id !== productId)
         );
-        await fetchCartItems(); // Then sync with server
+        await fetchCartItems();
       }
     } catch (error) {
       console.error("Remove item error:", error);
       setError(error.message);
-      // Revert optimistic update if needed
       fetchCartItems();
     }
   };
@@ -323,7 +320,6 @@ function UserDashboard() {
     }
   };
 
-  // In UserDashboard component
   const handlePaymentMethod = (method) => {
     setSelectedPaymentMethod(method);
     setShowPaymentOptions(false);
@@ -336,7 +332,7 @@ function UserDashboard() {
     if (method === "card") {
       navigate("/CardPaymentForm", {
         state: {
-          totalAmount: cartTotal, // This is now passed via state
+          totalAmount: cartTotal,
           cartItems: cartItems,
         },
       });
@@ -430,7 +426,6 @@ function UserDashboard() {
         throw new Error(data.message || "Failed to cancel order");
 
       if (data.success) {
-        // Refresh orders list
         alert(data.message || "Order cancelled successfully");
         loadOrders();
       }
@@ -468,7 +463,6 @@ function UserDashboard() {
         throw new Error(data.message || "Failed to remove item");
 
       if (data.success) {
-        // Refresh order details and orders list
         alert(data.message);
         const updatedDetails = await fetchOrderDetails(selectedOrder);
         setOrderDetails(updatedDetails);
@@ -612,7 +606,6 @@ function UserDashboard() {
   };
 
   const renderProducts = (query = "") => {
-    // Filter products based on search query
     const filteredProducts = products.filter(
       (product) =>
         product.product_name.toLowerCase().includes(query) ||
@@ -673,7 +666,7 @@ function UserDashboard() {
 
   return (
     <div className="dashboard-container">
-      <div className={`dashboard-sidebar ${!isSidebarOpen ? "collapsed" : ""}`}>
+      <div className="dashboard-sidebar">
         <div className="user-profile">
           <div className="profile-picture">
             {user?.name?.[0]?.toUpperCase() || "U"}
@@ -710,19 +703,7 @@ function UserDashboard() {
         </nav>
       </div>
 
-      <div className={`dashboard-main ${!isSidebarOpen ? "collapsed" : ""}`}>
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          aria-label="Toggle sidebar"
-        >
-          <div className={`hamburger ${isSidebarOpen ? "open" : ""}`}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </button>
-
+      <div className="dashboard-main">
         {activeTab === "home" && (
           <div className="products-grid">
             <div className="products-header">
@@ -790,7 +771,6 @@ function UserDashboard() {
           <div className="orders-grid">
             <h2>Order History ({orders.length})</h2>
 
-            {/* Order Details Modal */}
             {selectedOrder && (
               <div className={`modal-overlay ${isClosing ? "closing" : ""}`}>
                 <div
@@ -832,7 +812,6 @@ function UserDashboard() {
                               {(item.unit_price * item.quantity).toFixed(2)}
                             </p>
                           </div>
-                          {/* Add cancel button here */}
                           {orders
                             .find((o) => o.order_id === selectedOrder)
                             ?.order_status?.toLowerCase() === "pending" && (
@@ -857,7 +836,6 @@ function UserDashboard() {
               </div>
             )}
 
-            {/* Orders List */}
             {isLoading ? (
               <div className="loading-indicator">
                 <div className="spinner"></div>

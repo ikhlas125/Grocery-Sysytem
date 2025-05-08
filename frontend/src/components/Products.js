@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types';
-import './Products.css';
+import React, { useState, useEffect } from "react";
+import { Routes, Route, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
+import "./Products.css";
 
 function Products() {
   const navigate = useNavigate();
@@ -19,22 +19,22 @@ function Products() {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch('http://localhost:5000/api/products');
-      
+
+      const response = await fetch("http://localhost:5000/api/products");
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      
+
       if (!result.success || !Array.isArray(result.data)) {
-        throw new Error('Invalid data format from server');
+        throw new Error("Invalid data format from server");
       }
-      
+
       setProducts(result.data);
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error("Fetch error:", error);
       setError(error.message);
       setProducts([]);
     } finally {
@@ -43,7 +43,7 @@ function Products() {
   };
 
   const handleAddToCart = (productId) => {
-   navigate('/login')
+    navigate("/login");
   };
 
   const renderProducts = () => {
@@ -80,23 +80,23 @@ function Products() {
 
     return (
       <div className="products-list">
-        {products.map(product => (
+        {products.map((product) => (
           <div key={product.product_id} className="product-card">
-            <img 
-              src={product.image_url || '/placeholder-product.jpg'} 
+            <img
+              src={product.image_url || "/placeholder-product.jpg"}
               alt={product.product_name}
               onError={(e) => {
-                e.target.src = '/placeholder-product.jpg';
+                e.target.src = "/placeholder-product.jpg";
               }}
               className="product-image"
             />
             <div className="product-details">
               <h3>{product.product_name}</h3>
               <p className="product-description">
-                {product.description || 'No description available'}
+                {product.description || "No description available"}
               </p>
-              <p className="price">${product.price?.toFixed(2) || '0.00'}</p>
-              <button 
+              <p className="price">${product.price?.toFixed(2) || "0.00"}</p>
+              <button
                 className="add-to-cart"
                 onClick={() => handleAddToCart(product.product_id)}
               >
@@ -117,7 +117,9 @@ function Products() {
           <Link to="/">Home</Link>
           <Link to="/Products">Products</Link>
           <Link to="/contact">Contact</Link>
-          <Link to="/login" className="login-btn">Login</Link>
+          <Link to="/login" className="login-btn">
+            Login
+          </Link>
         </div>
       </nav>
 
