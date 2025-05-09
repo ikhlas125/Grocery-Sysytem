@@ -7,7 +7,6 @@ function VendorDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("add");
-  // const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -213,6 +212,34 @@ function VendorDashboard() {
     } catch (error) {
       console.error("Error adding category:", error);
       throw error;
+    }
+  };
+
+  const handleProcessOrder = async (orderId, orderDetailId) => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/products/processOrder",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            order_id: orderId,
+            order_detail_id: orderDetailId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Processing failed");
+
+      alert("Order processed successfully!");
+      // Refresh orders list
+      await fetchVendorOrders();
+    } catch (error) {
+      alert(`Error: ${error.message}`);
     }
   };
 
@@ -557,22 +584,39 @@ function VendorDashboard() {
           <div key={order.order_detail_id} className="order-product-card">
             <div className="order-header">
               <h3>Order #{order.order_detail_id}</h3>
-              <span
-                className={`status-badge ${order.order_status.toLowerCase()}`}
-              >
-                {order.order_status}
-              </span>
+              <div className="order-actions">
+                <span
+                  className={`status-badge ${order.order_status.toLowerCase()}`}
+                >
+                  {order.od_status}
+                </span>
+                <button
+                  className="process-order-btn"
+                  disabled={order.od_status.toLowerCase() !== "pending"}
+                  onClick={() =>
+                    handleProcessOrder(order.order_id, order.order_detail_id)
+                  }
+                >
+                  Mark as Completed
+                </button>
+              </div>
             </div>
+            {/* Existing product details - keep all these elements */}
             <div className="product-info">
               <img
                 src={order.image_url || "/placeholder-product.jpg"}
                 alt={order.product_name}
                 className="product-thumbnail"
+                onError={(e) => {
+                  e.target.src = "/placeholder-product.jpg";
+                }}
               />
               <div className="product-details">
                 <h4>{order.product_name}</h4>
                 <p>Product ID: {order.product_id}</p>
                 <p>Quantity: {order.quantity}</p>
+                <p>Unit Price: ${order.unit_price?.toFixed(2)}</p>
+                <p>Total: ${(order.unit_price * order.quantity)?.toFixed(2)}</p>
               </div>
             </div>
             <div className="order-meta">
@@ -587,10 +631,7 @@ function VendorDashboard() {
                 {new Date(order.order_date).toLocaleDateString()}
               </p>
               <p>
-                <strong>Amount:</strong> ${order.unit_price.toFixed(2)}
-              </p>
-              <p>
-                <strong>Payment Method:</strong> ${order.payment_method}
+                <strong>Payment Method:</strong> {order.payment_method}
               </p>
             </div>
           </div>

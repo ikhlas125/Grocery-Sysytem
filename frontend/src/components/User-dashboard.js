@@ -811,10 +811,11 @@ function UserDashboard() {
                               Total: $
                               {(item.unit_price * item.quantity).toFixed(2)}
                             </p>
+                            {/* Display item status if available */}
+                            {item.status && <p>Status: {item.status}</p>}
                           </div>
-                          {orders
-                            .find((o) => o.order_id === selectedOrder)
-                            ?.order_status?.toLowerCase() === "pending" && (
+                          {/* Show remove button if this specific item is not completed */}
+                          {item.status?.toLowerCase() !== "completed" && (
                             <button
                               className="remove-item"
                               onClick={(e) => {
@@ -870,7 +871,8 @@ function UserDashboard() {
                       </p>
                       <p>Total: ${order.total_amount?.toFixed(2)}</p>
                     </div>
-                    {order.order_status.toLowerCase() === "pending" && (
+                    {(order.order_status.toLowerCase() === "pending" ||
+                      order.order_status.toLowerCase() === "processed") && (
                       <button
                         className="remove-item"
                         onClick={(e) => {

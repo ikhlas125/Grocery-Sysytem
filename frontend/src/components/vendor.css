@@ -206,6 +206,11 @@
   color: #155724;
 }
 
+.status-badge.processed {
+  background: #d4edda;
+  color: #241557;
+}
+
 .status-badge.pending {
   background: #fff3cd;
   color: #856404;
@@ -508,4 +513,36 @@ select:focus {
   width: 50px;
   height: 50px;
   font-size: 1.2rem;
+}
+
+.order-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.process-order-btn {
+  background: var(--primary-green);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.process-order-btn:hover {
+  background: #1a6b4d;
+}
+
+.process-order-btn:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
