@@ -495,6 +495,37 @@ const productsController = {
       });
     }
   },
+
+  ProcessOrder: async (req, res) => {
+    try {
+      const { order_id, order_detail_id } = req.body;
+      if (!order_id) {
+        return res.status(400).json({
+          success: false,
+          message: "Order ID is required",
+        });
+      }
+      if (!order_detail_id) {
+        return res.status(400).json({
+          success: false,
+          message: "OrderDetail ID is required",
+        });
+      }
+      const result = await ProductModel.ProcessOrder(order_id, order_detail_id);
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      console.error("[ProductController] Error:", error);
+      const statusCode = error.message.includes("validation") ? 400 : 500;
+      res.status(statusCode).json({
+        success: false,
+        message: error.message || "Order processing failed",
+        error: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      });
+    }
+  },
 };
 
 module.exports = productsController;
