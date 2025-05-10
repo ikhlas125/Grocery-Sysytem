@@ -566,6 +566,43 @@ const productsController = {
       });
     }
   },
+
+  HistoryDetails: async (req, res) => {
+    try {
+      const { product_id, vendor_id } = req.body;
+
+      if (!vendor_id) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid Vendor ID (6 chars) is required",
+        });
+      }
+
+      if (!product_id) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid Product ID (6 chars) is required",
+        });
+      }
+
+      const products = await ProductModel.HistoryDetails(product_id, vendor_id);
+
+      res.status(200).json({
+        success: true,
+        count: products.length,
+        data: products,
+      });
+    } catch (error) {
+      console.error("Server error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error fetching history Details",
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
+        data: [],
+      });
+    }
+  },
 };
 
 module.exports = productsController;

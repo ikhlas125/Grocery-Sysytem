@@ -345,6 +345,25 @@ const Products = {
       throw new Error("Failed to get history");
     }
   },
+
+  async HistoryDetails(product_id, vendor_id) {
+    try {
+      const pool = await poolPromise;
+      const result = await pool
+        .request()
+        .input("product_id", sql.VarChar(6), product_id)
+        .input("vendor_id", sql.VarChar(6), vendor_id)
+        .execute("getProductHistoryDetails");
+      return result.recordset.map((details) => ({
+        customer_id: details.customer_id,
+        customer_name: details.customer_name,
+        sold_date: details.sold_date,
+      }));
+    } catch (error) {
+      console.error("Database error:", error);
+      throw new Error("Failed to get history details");
+    }
+  },
 };
 
 module.exports = Products;

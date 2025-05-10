@@ -19,5 +19,6 @@ router.post("/filter-category", productsController.getProductsbyCat);
 router.post("/update-product", productsController.updateProduct);
 router.post("/processOrder", productsController.ProcessOrder);
 router.post("/salehistory", productsController.SalesHistory);
+router.post("/salesDetails", productsController.HistoryDetails);
 
 module.exports = router;
