@@ -526,6 +526,46 @@ const productsController = {
       });
     }
   },
+
+  SalesHistory: async (req, res) => {
+    try {
+      const { vendor_id, product_id } = req.body;
+
+      if (!vendor_id) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid Vendor ID (6 chars) is required",
+        });
+      }
+
+      if (!product_id) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid Product ID (6 chars) is required",
+        });
+      }
+
+      const products = await ProductModel.getSalesHistory(
+        vendor_id,
+        product_id
+      );
+
+      res.status(200).json({
+        success: true,
+        count: products.length,
+        data: products,
+      });
+    } catch (error) {
+      console.error("Server error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error fetching history",
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
+        data: [],
+      });
+    }
+  },
 };
 
 module.exports = productsController;

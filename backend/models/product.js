@@ -321,6 +321,30 @@ const Products = {
       throw new Error("Failed to process order");
     }
   },
+
+  async getSalesHistory(vendor_id, product_id) {
+    try {
+      const pool = await poolPromise;
+      const result = await pool
+        .request()
+        .input("vendor_id", sql.VarChar(6), vendor_id)
+        .input("product_id", sql.VarChar(6), product_id)
+        .execute("getProductHistory");
+      return result.recordset.map((details) => ({
+        product_id: details.product_id,
+        product_name: details.product_name,
+        quantity: details.quantity_sold,
+        unit_price: details.unit_price,
+        total_price: details.total_price,
+        image_url: details.image_url,
+        vendor_id: details.vendor_id,
+        latest_date: details.latest_date,
+      }));
+    } catch (error) {
+      console.error("Database error:", error);
+      throw new Error("Failed to get history");
+    }
+  },
 };
 
 module.exports = Products;
