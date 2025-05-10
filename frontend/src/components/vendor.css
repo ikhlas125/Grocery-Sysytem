@@ -236,18 +236,66 @@ select {
   width: 100%;
   padding: 1rem;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 12px; /* Increased border radius */
   font-size: 1rem;
   margin-top: 0.5rem;
   background-color: var(--white);
   color: var(--dark-text);
-  transition: var(--transition);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  appearance: none; /* Remove default arrow */
+  background-image: linear-gradient(
+      45deg,
+      transparent 50%,
+      var(--primary-green) 50%
+    ),
+    linear-gradient(135deg, var(--primary-green) 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(1em + 6px),
+    calc(100% - 15px) calc(1em + 6px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  padding-right: 2.5rem; /* Space for custom arrow */
 }
 
-select:focus {
+/* Hover state */
+select:hover {
   border-color: var(--accent-orange);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus state */
+select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.1);
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.2);
+}
+
+/* Disabled state */
+select:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* For modern browsers - styling the dropdown list */
+select option {
+  padding: 0.8rem;
+  background: var(--white);
+  color: var(--dark-text);
+}
+
+/* For the first option as a placeholder */
+select option:first-child {
+  color: #999;
+  font-style: italic;
+}
+
+/* For Firefox - removes dotted outline */
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--dark-text);
 }
 
 .order-product-card {
@@ -545,4 +593,10 @@ select:focus {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.seect {
+  font-size: larger;
+  font-family: "Playfair Display", serif;
+  color: var(--primary-green);
 }

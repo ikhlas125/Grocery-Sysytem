@@ -13,7 +13,14 @@ function VendorDashboard() {
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [salesHistory, setSalesHistory] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState("");
 
+  useEffect(() => {
+    if (activeTab === "history" && user && selectedProduct) {
+      fetchSalesHistory();
+    }
+  }, [activeTab, user, selectedProduct]);
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -32,6 +39,44 @@ function VendorDashboard() {
       fetchVendorProducts();
     }
   }, [user]);
+
+  const fetchSalesHistory = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch(
+        "http://localhost:5000/api/products/salehistory",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            vendor_id: user?.vendorId,
+            product_id: selectedProduct,
+          }),
+        }
+      );
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      const result = await response.json();
+
+      if (!result.success || !Array.isArray(result.data)) {
+        throw new Error("Invalid sales data format from server");
+      }
+
+      setSalesHistory(result.data);
+    } catch (error) {
+      console.error("Fetch sales history error:", error);
+      setError(error.message);
+      setSalesHistory([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchVendorOrders = async () => {
     try {
@@ -362,6 +407,72 @@ function VendorDashboard() {
     </div>
   );
 
+  const renderSalesHistory = () => (
+    <div className="orders-grid">
+      <h2>Sales History</h2>
+
+      <div className="filter-section" style={{ marginBottom: "2rem" }}>
+        <label className="seect">
+          Select Product:
+          <select
+            value={selectedProduct}
+            onChange={(e) => setSelectedProduct(e.target.value)}
+            disabled={isLoading || products.length === 0}
+          >
+            <option value="">Select a product</option>
+            {products.map((product) => (
+              <option key={product.product_id} value={product.product_id}>
+                {product.product_name} ({product.product_id})
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {isLoading ? (
+        <div className="loading-indicator">
+          <div className="spinner"></div>
+          <p>Loading sales history...</p>
+        </div>
+      ) : error ? (
+        <div className="error-message">⚠️ Error loading history: {error}</div>
+      ) : salesHistory.length === 0 ? (
+        <p className="no-orders">No sales history found for this product</p>
+      ) : (
+        salesHistory.map((sale) => (
+          <div key={sale.product_id} className="order-product-card">
+            <div className="product-info">
+              <img
+                src={sale.image_url || "/placeholder-product.jpg"}
+                alt={sale.product_name}
+                className="product-thumbnail"
+                onError={(e) => {
+                  e.target.src = "/placeholder-product.jpg";
+                }}
+              />
+              <div className="product-details">
+                <h4>{sale.product_name}</h4>
+                <p>Product ID: {sale.product_id}</p>
+                <p>Quantity Sold: {sale.quantity}</p>
+                <p>Unit Price: ${sale.unit_price?.toFixed(2)}</p>
+                <p>Total Revenue: ${sale.total_price?.toFixed(2)}</p>
+              </div>
+            </div>
+            <div className="order-meta">
+              <p>
+                <strong>Vendor ID:</strong> {sale.vendor_id}
+              </p>
+              <p>
+                <strong>Last Sold Date:</strong>{" "}
+                {new Date(sale.latest_date).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
   const renderUpdateForm = () => {
     if (!editingProduct) return null;
 
@@ -677,6 +788,13 @@ function VendorDashboard() {
           >
             📦 Customer Orders
           </button>
+
+          <button
+            className={activeTab === "history" ? "active" : ""}
+            onClick={() => setActiveTab("history")}
+          >
+            🕘 Sales History
+          </button>
         </nav>
       </div>
 
@@ -690,6 +808,7 @@ function VendorDashboard() {
         {activeTab === "add" && renderAddProduct()}
         {activeTab === "remove" && renderAddCategory()}
         {activeTab === "ordered" && renderOrders()}
+        {activeTab === "history" && renderSalesHistory()}
       </div>
     </div>
   );
