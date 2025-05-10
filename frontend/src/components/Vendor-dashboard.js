@@ -15,6 +15,10 @@ function VendorDashboard() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [salesHistory, setSalesHistory] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [selectedHistory, setSelectedHistory] = useState(null);
+  const [customerDetails, setCustomerDetails] = useState([]);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState(null);
 
   useEffect(() => {
     if (activeTab === "history" && user && selectedProduct) {
@@ -75,6 +79,42 @@ function VendorDashboard() {
       setSalesHistory([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchCustomerDetails = async (productId) => {
+    try {
+      setIsDetailsLoading(true);
+      setDetailsError(null);
+      const response = await fetch(
+        "http://localhost:5000/api/products/salesDetails",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            product_id: productId,
+            vendor_id: user?.vendorId,
+          }),
+        }
+      );
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+
+      if (!result.success || !Array.isArray(result.data)) {
+        throw new Error("Invalid customer data format");
+      }
+
+      setCustomerDetails(result.data);
+    } catch (error) {
+      console.error("Fetch customer details error:", error);
+      setDetailsError(error.message);
+    } finally {
+      setIsDetailsLoading(false);
     }
   };
 
@@ -441,7 +481,18 @@ function VendorDashboard() {
       ) : (
         salesHistory.map((sale) => (
           <div key={sale.product_id} className="order-product-card">
-            <div className="product-info">
+            <div
+              className="product-info clickable"
+              onClick={() => {
+                if (selectedHistory === sale.product_id) {
+                  setSelectedHistory(null);
+                  setCustomerDetails([]);
+                } else {
+                  setSelectedHistory(sale.product_id);
+                  fetchCustomerDetails(sale.product_id);
+                }
+              }}
+            >
               <img
                 src={sale.image_url || "/placeholder-product.jpg"}
                 alt={sale.product_name}
@@ -458,15 +509,41 @@ function VendorDashboard() {
                 <p>Total Revenue: ${sale.total_price?.toFixed(2)}</p>
               </div>
             </div>
-            <div className="order-meta">
-              <p>
-                <strong>Vendor ID:</strong> {sale.vendor_id}
-              </p>
-              <p>
-                <strong>Last Sold Date:</strong>{" "}
-                {new Date(sale.latest_date).toLocaleDateString()}
-              </p>
-            </div>
+
+            {selectedHistory === sale.product_id && (
+              <div className="customer-details">
+                <h4>Customer Purchase History</h4>
+                {isDetailsLoading ? (
+                  <div className="loading-indicator">
+                    <div className="spinner"></div>
+                    <p>Loading customer details...</p>
+                  </div>
+                ) : detailsError ? (
+                  <div className="error-message">
+                    ⚠️ Error loading details: {detailsError}
+                  </div>
+                ) : customerDetails.length === 0 ? (
+                  <p className="no-orders">No customer details found</p>
+                ) : (
+                  customerDetails.map((customer) => (
+                    <div key={customer.customer_id} className="customer-card">
+                      <div className="customer-meta">
+                        <p>
+                          <strong>Customer ID:</strong> {customer.customer_id}
+                        </p>
+                        <p>
+                          <strong>Name:</strong> {customer.customer_name}
+                        </p>
+                        <p>
+                          <strong>Purchase Date:</strong>{" "}
+                          {new Date(customer.sold_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         ))
       )}

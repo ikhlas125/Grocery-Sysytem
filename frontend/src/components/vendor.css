@@ -600,3 +600,39 @@ select:-moz-focusring {
   font-family: "Playfair Display", serif;
   color: var(--primary-green);
 }
+
+.customer-details {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #eee;
+}
+
+.customer-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.customer-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.customer-meta p {
+  margin: 0;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 4px;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clickable:hover {
+  transform: translateX(5px);
+  box-shadow: 2px 0 0 var(--primary-green) inset;
+}
